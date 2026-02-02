@@ -12,6 +12,8 @@
       --line:#1f2b3a;
       --txt:#e9f1ff;
       --muted:#9fb0c8;
+      --warn:#ffd38a;
+      --err:#ff8aa0;
     }
     body{margin:0;background:var(--bg);color:var(--txt);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif;}
@@ -26,8 +28,8 @@
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 0;}
     button{background:#e9f1ff;color:#0b1220;border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer;}
     button.secondary{background:transparent;color:var(--txt);border:1px solid var(--line);}
+    button:disabled{opacity:.45; cursor:not-allowed;}
 
-    /* intro */
     #intro{
       background:var(--panel);
       border:1px solid var(--line);
@@ -37,7 +39,7 @@
     }
     .meta{font-size:11px;letter-spacing:.08em;color:var(--muted);text-align:right;}
 
-    /* start flow: 숨김 */
+    /* start flow */
     #questions, #actionsWrap, #progressWrap { display:none; }
 
     /* progress */
@@ -57,6 +59,17 @@
       background:linear-gradient(90deg, rgba(191,230,255,.95), rgba(170,255,220,.85));
       transition:width .18s ease;
     }
+    .notice{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.20);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.6;
+    }
+    .notice b{color:var(--warn);}
 
     /* result: image only */
     #resultImgWrap{
@@ -78,12 +91,17 @@
     }
     .smallnote{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.6}
     .err{
-      color:#ff8aa0;
+      color:var(--err);
       font-size:12px;
       margin-top:10px;
       display:none;
       line-height:1.55;
       white-space:pre-wrap;
+    }
+    .link{
+      color:#bfe6ff;
+      text-decoration:underline;
+      word-break:break-all;
     }
   </style>
 </head>
@@ -107,14 +125,20 @@
     <div id="progressWrap">
       <div class="prog">
         <div id="progText">진행 0 / 32</div>
-        <div>전부 답하면 자동으로 결과(이미지)가 나옵니다</div>
+        <div id="autoHint">전부 답하면 자동으로 결과(이미지)가 나옵니다</div>
       </div>
       <div class="bar"><div class="fill" id="fill"></div></div>
+
+      <div class="notice" id="noticeBox">
+        <b>결과가 안 뜨면</b> 아직 32문항을 다 선택하지 않은 상태일 가능성이 큽니다.<br/>
+        (이번 버전은 “선택하세요” 기본값이라서 <b>모든 문항을 한 번씩 선택</b>해야 자동 결과가 뜹니다.)
+      </div>
     </div>
 
     <div class="grid" id="questions"></div>
 
     <div class="actions" id="actionsWrap">
+      <button id="showResultBtn" disabled>결과 보기</button>
       <button class="secondary" id="resetBtn">전체 초기화</button>
     </div>
 
@@ -127,7 +151,21 @@
   </div>
 
   <script>
-    // ====== 질문(32) ======
+    /********************
+     * 설정
+     ********************/
+    // true: 32개 전부 직접 선택해야 결과
+    // false: 시작하자마자 "보통(2)"로 채워짐(자동결과가 바로 떠서 비추천)
+    const REQUIRE_EXPLICIT_SELECTION = true;
+
+    const OPTIONS = [
+      ["0", "전혀 아니다"],
+      ["1", "아니다"],
+      ["2", "보통이다"],
+      ["3", "그렇다"],
+      ["4", "매우 그렇다"],
+    ];
+
     const QUESTIONS = [
       // G 1-8
       "누군가를 좋아하게 되기 전부터, 이미 감정이 준비되어 있던 것 같다",
@@ -167,16 +205,6 @@
       "있는 그대로의 이야기를 존중하는 편이다",
     ];
 
-    // ====== 옵션 ======
-    const OPTIONS = [
-      ["0", "전혀 아니다"],
-      ["1", "아니다"],
-      ["2", "보통이다"],
-      ["3", "그렇다"],
-      ["4", "매우 그렇다"],
-    ];
-
-    // ====== 매핑 ======
     const G_INNER = [1,3,6,7];
     const G_OUTER = [2,4,5,8];
     const R_FAITH = [9,11,13,15];
@@ -186,8 +214,7 @@
     const A_PART   = [25,27,29,31];
     const A_OBS    = [26,28,30,32];
 
-    // ====== 타입별 이미지 경로 ======
-    // ※ 여기 경로가 실제 repo에 존재해야 함 (대소문자 포함)
+    // ⚠️ 여기 파일/폴더명은 GitHub Pages에서 대소문자까지 정확히 일치해야 함
     const IMAGES = {
       "I-F-A-P": "images/archivist.jpg",
       "I-F-A-B": "images/witness.jpg",
@@ -207,13 +234,18 @@
       "O-E-L-B": "images/focusing.jpg",
     };
 
-    // ====== DOM ======
+    /********************
+     * DOM
+     ********************/
     const intro = document.getElementById("intro");
     const questionsEl = document.getElementById("questions");
     const actionsWrap = document.getElementById("actionsWrap");
     const progressWrap = document.getElementById("progressWrap");
     const progText = document.getElementById("progText");
     const fill = document.getElementById("fill");
+    const noticeBox = document.getElementById("noticeBox");
+
+    const showResultBtn = document.getElementById("showResultBtn");
 
     const resultImgWrap = document.getElementById("resultImgWrap");
     const resultImg = document.getElementById("resultImg");
@@ -238,13 +270,14 @@
         const sel = document.createElement("select");
         sel.id = `q${i}`;
 
-        // 기본값: 미선택 (자동결과용)
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.text = "선택하세요";
-        placeholder.disabled = true;
-        placeholder.selected = true;
-        sel.appendChild(placeholder);
+        if (REQUIRE_EXPLICIT_SELECTION){
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.text = "선택하세요";
+          placeholder.disabled = true;
+          placeholder.selected = true;
+          sel.appendChild(placeholder);
+        }
 
         OPTIONS.forEach(([val, label]) => {
           const opt = document.createElement("option");
@@ -252,6 +285,9 @@
           opt.text = label;
           sel.appendChild(opt);
         });
+
+        // 기본값(요청에 따라)
+        sel.value = REQUIRE_EXPLICIT_SELECTION ? "" : "2";
 
         sel.addEventListener("change", () => {
           updateProgress();
@@ -264,13 +300,22 @@
       });
 
       updateProgress();
+      alreadyCalculated = false;
+      resultImgWrap.style.display = "none";
+      showResultBtn.disabled = true;
     }
 
     function getAnsweredCount(){
       let cnt = 0;
       for (let i=1; i<=32; i++){
         const el = document.getElementById(`q${i}`);
-        if (el && el.value !== "") cnt++;
+        if (!el) continue;
+        if (REQUIRE_EXPLICIT_SELECTION){
+          if (el.value !== "") cnt++;
+        } else {
+          // 기본값이 있으니 무조건 답한 것으로 취급
+          cnt++;
+        }
       }
       return cnt;
     }
@@ -279,11 +324,26 @@
       const answered = getAnsweredCount();
       progText.innerText = `진행 ${answered} / 32`;
       fill.style.width = `${(answered/32)*100}%`;
+
+      // 버튼 상태
+      showResultBtn.disabled = (answered !== 32);
+
+      // 안내 문구
+      if (answered === 32){
+        noticeBox.innerHTML = `<b>완료!</b> 자동으로 결과가 뜹니다. (또는 ‘결과 보기’ 클릭)`;
+      } else {
+        noticeBox.innerHTML =
+          `<b>결과가 안 뜨면</b> 아직 ${32-answered}문항이 미완료입니다.<br/>` +
+          (REQUIRE_EXPLICIT_SELECTION
+            ? `현재 버전은 “선택하세요” 기본값이라서 <b>모든 문항을 한 번씩 선택</b>해야 합니다.`
+            : `현재 버전은 기본값이 있어 자동으로 완료됩니다.`);
+      }
     }
 
     function score(qnum){
       const el = document.getElementById(`q${qnum}`);
-      if (!el || el.value === "") return 0;
+      if (!el) return 0;
+      if (REQUIRE_EXPLICIT_SELECTION && el.value === "") return 0;
       return parseInt(el.value, 10);
     }
 
@@ -309,19 +369,23 @@
       imgErr.textContent = "";
       imgDebug.textContent = "";
 
-      const src = IMAGES[code] || "";
-      if (!src){
+      const raw = IMAGES[code] || "";
+      if (!raw){
         imgErr.style.display = "block";
         imgErr.textContent = `이미지 매핑이 없습니다.\ncode=${code}\nIMAGES[code]가 비어있음`;
+        resultImgWrap.style.display = "block";
+        resultImgWrap.scrollIntoView({behavior:"smooth", block:"start"});
         return;
       }
 
-      // 디버그: 어떤 경로를 불러오는지 표시 (이미지 안 뜰 때 원인 확인용)
-      imgDebug.textContent = `TYPE: ${code}  |  IMG: ${src}`;
+      // 현재 페이지 기준으로 절대 URL 변환 (GitHub Pages 하위경로 문제 방지)
+      const abs = new URL(raw, window.location.href).href;
 
-      // 캐시/경로 문제 회피: querystring 붙여 갱신
-      const bust = `?v=${Date.now()}`;
-      resultImg.src = src + bust;
+      // 디버그 표시
+      imgDebug.innerHTML = `TYPE: <b>${code}</b><br/>IMG: <a class="link" href="${abs}" target="_blank" rel="noreferrer">${abs}</a>`;
+
+      // 캐시 회피
+      resultImg.src = abs + `?v=${Date.now()}`;
 
       resultImg.onload = () => {
         resultImgWrap.style.display = "block";
@@ -332,11 +396,13 @@
         imgErr.style.display = "block";
         imgErr.textContent =
           `이미지 로딩 실패\n` +
-          `- 요청 경로: ${resultImg.src}\n\n` +
+          `- 요청 URL: ${resultImg.src}\n\n` +
           `가장 흔한 원인:\n` +
           `1) 파일명/폴더명 대소문자 불일치 (GitHub Pages는 엄격)\n` +
-          `2) images 폴더가 repo 루트에 없음 (index.html과 같은 위치 기준)\n` +
-          `3) 실제 파일 확장자 .jpg/.png 불일치`;
+          `2) images 폴더가 배포 경로에 없음 (커밋/푸시/Pages 소스 확인)\n` +
+          `3) 확장자 불일치 (.jpg/.png/.jpeg)\n`;
+        resultImgWrap.style.display = "block";
+        resultImgWrap.scrollIntoView({behavior:"smooth", block:"start"});
       };
     }
 
@@ -354,7 +420,8 @@
 
       for (let i=1; i<=32; i++){
         const el = document.getElementById(`q${i}`);
-        if (el) el.value = "";
+        if (!el) continue;
+        el.value = REQUIRE_EXPLICIT_SELECTION ? "" : "2";
       }
       updateProgress();
 
@@ -371,26 +438,28 @@
     document.getElementById("startBtn").addEventListener("click", () => {
       build_questions();
       intro.style.display = "none";
+      progressWrap.style.display = "block";
       questionsEl.style.display = "grid";
       actionsWrap.style.display = "flex";
-      progressWrap.style.display = "block";
       questionsEl.scrollIntoView({behavior:"smooth", block:"start"});
+    });
+
+    // 결과 보기(완료 시 활성화)
+    showResultBtn.addEventListener("click", () => {
+      const answered = getAnsweredCount();
+      if (answered !== 32) return;
+      alreadyCalculated = true;
+      showResultImage(calcTypeCode());
     });
 
     document.getElementById("resetBtn").addEventListener("click", reset_all);
   </script>
 
-  <!-- ============================================================
-       [나중에 붙이기] 카드형 결과 UI 블록 (현재는 사용 안함)
-       - 너가 원할 때 "이미지 대신 카드 결과"로 갈아끼우면 됨
-       - 지금은 결과를 이미지 1장만 보여주는게 목표라서 제외
-     ============================================================
-
-     1) 기존 카드 HTML을 되살리고 싶으면:
-        - resultImgWrap 대신 result(카드) 섹션을 다시 넣기
-        - showResultImage(code) 대신 renderResultCard(code, ...data) 호출
-
-     2) renderResultCard 함수/HTML은 이전 버전에서 그대로 가져와 붙이면 됨
+  <!--
+    [나중에 붙이기: 카드형 결과 UI]
+    지금은 "이미지 1장만" 출력하도록 단순화했음.
+    나중에 카드 UI를 다시 붙일 때는 showResultImage(code) 대신
+    renderResultCard(code, ...) 같은 함수로 갈아끼우면 됨.
   -->
 </body>
 </html>
