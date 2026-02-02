@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>GRUA CAMPUS POSITIONS</title>
+  <title>GRUA CAMPUS POSITION</title>
 
   <style>
     :root{
@@ -107,7 +107,7 @@
     <div id="progressWrap">
       <div class="prog">
         <div id="progText">진행 0 / 32</div>
-        <div>전부 답하면 자동으로 결과가 나옵니다</div>
+        <div>전부 답하면 자동으로 결과(이미지)가 나옵니다</div>
       </div>
       <div class="bar"><div class="fill" id="fill"></div></div>
     </div>
@@ -380,5 +380,17 @@
     document.getElementById("resetBtn").addEventListener("click", reset_all);
   </script>
 
+  <!-- ============================================================
+       [나중에 붙이기] 카드형 결과 UI 블록 (현재는 사용 안함)
+       - 너가 원할 때 "이미지 대신 카드 결과"로 갈아끼우면 됨
+       - 지금은 결과를 이미지 1장만 보여주는게 목표라서 제외
+     ============================================================
+
+     1) 기존 카드 HTML을 되살리고 싶으면:
+        - resultImgWrap 대신 result(카드) 섹션을 다시 넣기
+        - showResultImage(code) 대신 renderResultCard(code, ...data) 호출
+
+     2) renderResultCard 함수/HTML은 이전 버전에서 그대로 가져와 붙이면 됨
+  -->
 </body>
 </html>
