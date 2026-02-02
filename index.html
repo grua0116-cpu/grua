@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>GRUA CAMPUS POSITION</title>
+  <title>GRUA CAMPUS POSITIONS</title>
 
   <style>
     :root{
@@ -15,7 +15,16 @@
     .wrap{max-width:980px;margin:0 auto;padding:34px 18px 72px;}
     h1{font-size:24px;letter-spacing:.3px;margin:0 0 8px;}
     .sub{color:var(--muted);margin:0 0 18px;font-size:13px;line-height:1.5}
-    .meta{font-size:11px;letter-spacing:.08em;color:var(--muted);text-align:right;margin-bottom:12px;}
+    .meta{font-size:11px;letter-spacing:.08em;color:var(--muted);text-align:right;margin-top:10px;}
+
+    /* Intro card */
+    #intro{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:18px;
+      margin-bottom:14px;
+    }
 
     .notice{
       margin:14px 0 16px;
@@ -41,6 +50,7 @@
     button:disabled{opacity:.45;cursor:not-allowed;}
 
     /* progress */
+    #progressWrap{margin-top:8px;}
     .prog{display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--muted);font-size:12px;margin:0 0 10px;}
     .bar{width:100%;height:10px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);overflow:hidden;}
     .fill{height:100%;width:0%;background:linear-gradient(90deg, rgba(191,230,255,.95), rgba(170,255,220,.85));transition:width .18s ease;}
@@ -59,34 +69,50 @@
     .err{display:none;margin-top:10px;color:var(--err);font-size:12px;line-height:1.55;white-space:pre-wrap;}
     .smallnote{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.6;}
     .link{color:#bfe6ff;text-decoration:underline;word-break:break-all;}
+
+    /* Flow visibility */
+    #questions, #progressWrap, #actionsWrap { display:none; }
   </style>
 </head>
 
 <body>
   <div class="wrap">
-    <h1>GRUA CAMPUS POSITION</h1>
-    <p class="sub">32문항 응답이 완료되면 자동으로 결과(이미지)가 표시됩니다.</p>
-    <div class="meta">Output: IMAGE ONLY · Auto + Manual</div>
+    <!-- INTRO -->
+    <section id="intro">
+      <h1>GRUA CAMPUS POSITIONS</h1>
+      <p class="sub">당신은 지금 어떤 사랑을 하고 있습니까? 
+그리하여 사랑을 지켜낼 수 있습니까? 
+사랑을 지켜내기 위한 당신의 캠퍼스 포지션을 16가지로 분류합니다. 
+당신의 포지션을 기억하세요. </p>
+      <div class="meta">Format: 32 Items · 5-Point Scale · Output: IMAGE ONLY</div>
 
-    <!-- 항상 보이는 진단/진행 -->
-    <div class="prog">
-      <div id="progText">진행 0 / 32</div>
-      <div id="jsAlive">JS: (확인중)</div>
+      <div style="margin-top:14px;">
+        <button id="startBtn">START</button>
+      </div>
+    </section>
+
+    <!-- PROGRESS -->
+    <div id="progressWrap">
+      <div class="prog">
+        <div id="progText">진행 0 / 32</div>
+        <div id="jsAlive">JS: RUNNING</div>
+      </div>
+      <div class="bar"><div class="fill" id="fill"></div></div>
+      <div class="notice" id="noticeBox">
+        <b>안내</b> 각 문항은 “선택하세요” 상태로 시작합니다. 32개 모두 선택해야 포지션을 확인할 수 있습니다다.
+      </div>
     </div>
-    <div class="bar"><div class="fill" id="fill"></div></div>
 
-    <div class="notice" id="noticeBox">
-      <b>안내</b> 각 문항은 “선택하세요” 상태로 시작합니다. 32개 모두 선택해야 결과가 뜹니다.
-    </div>
-
+    <!-- QUESTIONS -->
     <div class="grid" id="questions"></div>
 
-    <!-- 버튼은 항상 보이게 -->
-    <div class="actions">
+    <!-- ACTIONS -->
+    <div class="actions" id="actionsWrap">
       <button id="showResultBtn" disabled>결과 보기</button>
       <button class="secondary" id="resetBtn">전체 초기화</button>
     </div>
 
+    <!-- RESULT -->
     <div id="resultImgWrap">
       <img id="resultImg" alt="result image" />
       <div class="err" id="imgErr"></div>
@@ -95,10 +121,9 @@
   </div>
 
   <script>
-    // ====== “JS 실행 중” 표시 (이게 안 바뀌면 JS 자체가 안 도는 것) ======
-    document.getElementById("jsAlive").innerText = "JS: RUNNING";
-
-    // ====== 옵션 ======
+    /********************
+     * 질문/옵션
+     ********************/
     const OPTIONS = [
       ["0", "전혀 아니다"],
       ["1", "아니다"],
@@ -107,7 +132,6 @@
       ["4", "매우 그렇다"],
     ];
 
-    // ====== 질문(32) ======
     const QUESTIONS = [
       // G 1-8
       "누군가를 좋아하게 되기 전부터, 이미 감정이 준비되어 있던 것 같다",
@@ -147,7 +171,9 @@
       "있는 그대로의 이야기를 존중하는 편이다",
     ];
 
-    // ====== 매핑 ======
+    /********************
+     * 매핑(점수)
+     ********************/
     const G_INNER = [1,3,6,7];
     const G_OUTER = [2,4,5,8];
     const R_FAITH = [9,11,13,15];
@@ -157,28 +183,53 @@
     const A_PART   = [25,27,29,31];
     const A_OBS    = [26,28,30,32];
 
-    // ====== 이미지 경로 ======
-  const IMAGE_KEYS = {
-  "I-F-A-P": "archivist",
-  "I-F-A-B": "witness",
-  "I-F-L-P": "author",
-  "I-F-L-B": "curator",
-  "I-E-A-P": "analyst",
-  "I-E-A-B": "observer-a",
-  "I-E-L-P": "strategist",
-  "I-E-L-B": "focusing-a",
-  "O-F-A-P": "devotee",
-  "O-F-A-B": "sentinel",
-  "O-F-L-P": "resonator",
-  "O-F-L-B": "librarian",
-  "O-E-A-P": "confessor",
-  "O-E-A-B": "archivist-o",
-  "O-E-L-P": "adapter",
-  "O-E-L-B": "focusing",
-};
+    /********************
+     * 이미지: GitHub images 폴더 자동 인덱싱(대소문자/확장자 문제 회피)
+     ********************/
+    const IMAGE_KEYS = {
+      "I-F-A-P": "archivist",
+      "I-F-A-B": "witness",
+      "I-F-L-P": "author",
+      "I-F-L-B": "curator",
+      "I-E-A-P": "analyst",
+      "I-E-A-B": "observer-a",
+      "I-E-L-P": "strategist",
+      "I-E-L-B": "focusing-a",
+      "O-F-A-P": "devotee",
+      "O-F-A-B": "sentinel",
+      "O-F-L-P": "resonator",
+      "O-F-L-B": "librarian",
+      "O-E-A-P": "confessor",
+      "O-E-A-B": "archivist-o",
+      "O-E-L-P": "adapter",
+      "O-E-L-B": "focusing",
+    };
 
-    // ====== DOM ======
+    let IMAGE_INDEX = null;
+    async function loadImageIndex(){
+      const api = "https://api.github.com/repos/grua0116-cpu/grua/contents/images";
+      const res = await fetch(api, { cache: "no-store" });
+      if (!res.ok) throw new Error(`GitHub API failed: ${res.status}`);
+      const items = await res.json();
+      const idx = {};
+      for (const it of items){
+        if (!it.name || !it.download_url) continue;
+        const base = it.name.toLowerCase().replace(/\.(png|jpg|jpeg|webp)$/i, "");
+        idx[base] = { url: it.download_url, name: it.name };
+      }
+      IMAGE_INDEX = idx;
+    }
+
+    /********************
+     * DOM
+     ********************/
+    const intro = document.getElementById("intro");
+    const startBtn = document.getElementById("startBtn");
+
+    const progressWrap = document.getElementById("progressWrap");
     const questionsEl = document.getElementById("questions");
+    const actionsWrap = document.getElementById("actionsWrap");
+
     const progText = document.getElementById("progText");
     const fill = document.getElementById("fill");
     const noticeBox = document.getElementById("noticeBox");
@@ -234,6 +285,9 @@
       });
 
       updateProgress();
+      alreadyCalculated = false;
+      resultImgWrap.style.display = "none";
+      showResultBtn.disabled = true;
     }
 
     function getAnsweredCount(){
@@ -264,10 +318,7 @@
       if (!el || el.value === "") return 0;
       return parseInt(el.value, 10);
     }
-
-    function ssum(nums){
-      return nums.reduce((acc, n) => acc + score(n), 0);
-    }
+    function ssum(nums){ return nums.reduce((acc,n)=>acc+score(n),0); }
 
     function calcTypeCode(){
       const g_inner = ssum(G_INNER), g_outer = ssum(G_OUTER);
@@ -282,104 +333,63 @@
       return `${G}-${R}-${U}-${A}`;
     }
 
-   async function  checkAutoCalc(code){
-  imgErr.style.display = "none";
-  imgErr.textContent = "";
-  imgDebug.textContent = "";
+    async function showResultImage(code){
+      imgErr.style.display = "none";
+      imgErr.textContent = "";
+      imgDebug.textContent = "";
 
-  const key = IMAGE_KEYS[code];
-  if (!key){
-    imgErr.style.display = "block";
-    imgErr.textContent = `이미지 키가 없습니다.\ncode=${code}`;
-    resultImgWrap.style.display = "block";
-    return;
-  }
-
-  try{
-    if (!IMAGE_INDEX) await loadImageIndex();
-
-    const hit = IMAGE_INDEX[key.toLowerCase()];
-    if (!hit){
-      imgErr.style.display = "block";
-      imgErr.textContent =
-        `images 폴더에서 파일을 찾지 못했습니다.\n` +
-        `- 찾는 키: ${key}\n\n` +
-        `해결:\n` +
-        `1) GitHub 레포에서 images 폴더 이름이 정확히 "images"인지 확인\n` +
-        `2) 파일명이 ${key}.png 처럼 존재하는지 확인 (대소문자 상관없이 가능하지만 "기본이름"은 같아야 함)`;
-      resultImgWrap.style.display = "block";
-      return;
-    }
-
-    // download_url은 확실히 존재하는 실제 파일을 가리킴
-    const abs = hit.url;
-    imgDebug.innerHTML =
-      `TYPE: <b>${code}</b><br/>` +
-      `FILE: ${hit.name}<br/>` +
-      `URL: <a class="link" href="${abs}" target="_blank" rel="noreferrer">${abs}</a>`;
-
-    resultImg.onload = () => {
-      resultImgWrap.style.display = "block";
-      resultImgWrap.scrollIntoView({behavior:"smooth", block:"start"});
-    };
-    resultImg.onerror = () => {
-      imgErr.style.display = "block";
-      imgErr.textContent =
-        `이미지 로딩 실패(실파일 URL인데도 실패)\n` +
-        `- URL: ${abs}\n\n` +
-        `가능 원인:\n` +
-        `1) 레포가 private이라 download_url 접근 제한\n` +
-        `2) 브라우저 확장/보안 설정 차단`;
-      resultImgWrap.style.display = "block";
-    };
-
-    resultImg.src = abs + `?v=${Date.now()}`;
-  } catch (e){
-    imgErr.style.display = "block";
-    imgErr.textContent =
-      `이미지 인덱스 로딩 실패\n` +
-      `${String(e)}\n\n` +
-      `해결:\n` +
-      `1) 레포가 public인지 확인\n` +
-      `2) images 폴더가 레포 루트에 있는지 확인\n` +
-      `3) API 제한(너무 자주 새로고침) 시 잠깐 후 재시도`;
-    resultImgWrap.style.display = "block";
-  }
-
-      // 현재 페이지 기준으로 절대 URL로 변환 (Pages 하위 경로 안전)
-      const abs = new URL(raw, window.location.href).href;
-
-      imgDebug.innerHTML =
-        `TYPE: <b>${code}</b><br/>` +
-        `IMG: <a class="link" href="${abs}" target="_blank" rel="noreferrer">${abs}</a>`;
-
-      resultImg.src = abs + `?v=${Date.now()}`;
-
-      resultImg.onload = () => {
-        resultImgWrap.style.display = "block";
-        resultImgWrap.scrollIntoView({behavior:"smooth", block:"start"});
-      };
-
-      resultImg.onerror = () => {
+      const key = IMAGE_KEYS[code];
+      if (!key){
         imgErr.style.display = "block";
-        imgErr.textContent =
-          `이미지 로딩 실패\n` +
-          `- 요청 URL: ${resultImg.src}\n\n` +
-          `원인 후보:\n` +
-          `1) images 폴더/파일이 repo에 실제로 없음 (커밋/푸시)\n` +
-          `2) 파일명 대소문자 불일치 (GitHub Pages는 엄격)\n` +
-          `3) 확장자 불일치 (.jpg/.png/.jpeg)\n`;
+        imgErr.textContent = `이미지 키 없음\ncode=${code}`;
         resultImgWrap.style.display = "block";
-        resultImgWrap.scrollIntoView({behavior:"smooth", block:"start"});
-      };
+        return;
+      }
+
+      try{
+        if (!IMAGE_INDEX) await loadImageIndex();
+
+        const hit = IMAGE_INDEX[key.toLowerCase()];
+        if (!hit){
+          imgErr.style.display = "block";
+          imgErr.textContent = `images 폴더에서 파일을 찾지 못했습니다.\n찾는 키: ${key}`;
+          resultImgWrap.style.display = "block";
+          return;
+        }
+
+        const abs = hit.url;
+
+        imgDebug.innerHTML =
+          `TYPE: <b>${code}</b><br/>` +
+          `FILE: ${hit.name}<br/>` +
+          `URL: <a class="link" href="${abs}" target="_blank" rel="noreferrer">${abs}</a>`;
+
+        resultImg.onload = () => {
+          resultImgWrap.style.display = "block";
+          resultImgWrap.scrollIntoView({behavior:"smooth", block:"start"});
+        };
+        resultImg.onerror = () => {
+          imgErr.style.display = "block";
+          imgErr.textContent = `이미지 로딩 실패\n${abs}`;
+          resultImgWrap.style.display = "block";
+        };
+
+        resultImg.src = abs + `?v=${Date.now()}`;
+
+      } catch (e){
+        imgErr.style.display = "block";
+        imgErr.textContent = `이미지 인덱스 로딩 실패\n${String(e)}`;
+        resultImgWrap.style.display = "block";
+      }
     }
 
     async function checkAutoCalc(){
-  if (answered === 32 && !alreadyCalculated){
-    alreadyCalculated = true;
-    await showResultImage(calcTypeCode());
-  }
-}
+      const answered = getAnsweredCount();
+      if (answered === 32 && !alreadyCalculated){
+        alreadyCalculated = true;
+        await showResultImage(calcTypeCode());
+      }
+    }
 
     function reset_all(){
       alreadyCalculated = false;
@@ -396,38 +406,30 @@
       window.scrollTo({top:0, behavior:"smooth"});
     }
 
-    // 버튼
+    // START 버튼 → 질문 화면 오픈
+    startBtn.addEventListener("click", () => {
+      build_questions();
+      intro.style.display = "none";
+      progressWrap.style.display = "block";
+      questionsEl.style.display = "grid";
+      actionsWrap.style.display = "flex";
+      window.scrollTo({top:0, behavior:"smooth"});
+    });
+
+    // 결과 보기 버튼
     showResultBtn.addEventListener("click", async () => {
-  if (getAnsweredCount() !== 32) return;
-  alreadyCalculated = true;
-  await showResultImage(calcTypeCode());
-});
+      if (getAnsweredCount() !== 32) return;
+      alreadyCalculated = true;
+      await showResultImage(calcTypeCode());
+    });
+
     resetBtn.addEventListener("click", reset_all);
-
-    // 최초 렌더
-    build_questions();
   </script>
-  let IMAGE_INDEX = null;
 
-// GitHub repo의 images 폴더 실제 파일명을 읽어서 인덱스를 만듦
-async function loadImageIndex(){
-  // 너의 레포: grua0116-cpu / grua
-  const api = "https://api.github.com/repos/grua0116-cpu/grua/contents/images";
-  const res = await fetch(api, { cache: "no-store" });
-  if (!res.ok) throw new Error(`GitHub API failed: ${res.status}`);
-  const items = await res.json();
-
-  // { "resonator": {url: "...", name:"Resonator.PNG"} } 처럼 만든다
-  const idx = {};
-  for (const it of items){
-    if (!it || !it.name || !it.download_url) continue;
-    const lower = it.name.toLowerCase();
-    // 확장자 제거
-    const base = lower.replace(/\.(png|jpg|jpeg|webp)$/i, "");
-    idx[base] = { url: it.download_url, name: it.name };
-  }
-  IMAGE_INDEX = idx;
-}
-
+  <!--
+    [나중에 붙이기: 카드형 결과 UI]
+    지금은 결과를 이미지 1장만 출력.
+    원하면 showResultImage(code) 호출 뒤에 renderResultCard(code) 같이 붙이는 구조로 확장 가능.
+  -->
 </body>
 </html>
