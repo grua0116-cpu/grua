@@ -158,23 +158,23 @@
     const A_OBS    = [26,28,30,32];
 
     // ====== 이미지 경로 ======
-   const IMAGES = {
-  "I-F-A-P": "images/archivist.png",
-  "I-F-A-B": "images/witness.png",
-  "I-F-L-P": "images/author.png",
-  "I-F-L-B": "images/curator.png",
-  "I-E-A-P": "images/analyst.png",
-  "I-E-A-B": "images/observer-a.png",
-  "I-E-L-P": "images/strategist.png",
-  "I-E-L-B": "images/focusing-a.png",
-  "O-F-A-P": "images/devotee.png",
-  "O-F-A-B": "images/sentinel.png",
-  "O-F-L-P": "images/resonator.png",
-  "O-F-L-B": "images/librarian.png",
-  "O-E-A-P": "images/confessor.png",
-  "O-E-A-B": "images/archivist-o.png",
-  "O-E-L-P": "images/adapter.png",
-  "O-E-L-B": "images/focusing.png",
+  const IMAGE_KEYS = {
+  "I-F-A-P": "archivist",
+  "I-F-A-B": "witness",
+  "I-F-L-P": "author",
+  "I-F-L-B": "curator",
+  "I-E-A-P": "analyst",
+  "I-E-A-B": "observer-a",
+  "I-E-L-P": "strategist",
+  "I-E-L-B": "focusing-a",
+  "O-F-A-P": "devotee",
+  "O-F-A-B": "sentinel",
+  "O-F-L-P": "resonator",
+  "O-F-L-B": "librarian",
+  "O-E-A-P": "confessor",
+  "O-E-A-B": "archivist-o",
+  "O-E-L-P": "adapter",
+  "O-E-L-B": "focusing",
 };
 
     // ====== DOM ======
@@ -282,19 +282,69 @@
       return `${G}-${R}-${U}-${A}`;
     }
 
-    function showResultImage(code){
-      imgErr.style.display = "none";
-      imgErr.textContent = "";
-      imgDebug.textContent = "";
+   async function  checkAutoCalc(code){
+  imgErr.style.display = "none";
+  imgErr.textContent = "";
+  imgDebug.textContent = "";
 
-      const raw = IMAGES[code] || "";
-      if (!raw){
-        imgErr.style.display = "block";
-        imgErr.textContent = `이미지 매핑이 없습니다.\ncode=${code}`;
-        resultImgWrap.style.display = "block";
-        resultImgWrap.scrollIntoView({behavior:"smooth", block:"start"});
-        return;
-      }
+  const key = IMAGE_KEYS[code];
+  if (!key){
+    imgErr.style.display = "block";
+    imgErr.textContent = `이미지 키가 없습니다.\ncode=${code}`;
+    resultImgWrap.style.display = "block";
+    return;
+  }
+
+  try{
+    if (!IMAGE_INDEX) await loadImageIndex();
+
+    const hit = IMAGE_INDEX[key.toLowerCase()];
+    if (!hit){
+      imgErr.style.display = "block";
+      imgErr.textContent =
+        `images 폴더에서 파일을 찾지 못했습니다.\n` +
+        `- 찾는 키: ${key}\n\n` +
+        `해결:\n` +
+        `1) GitHub 레포에서 images 폴더 이름이 정확히 "images"인지 확인\n` +
+        `2) 파일명이 ${key}.png 처럼 존재하는지 확인 (대소문자 상관없이 가능하지만 "기본이름"은 같아야 함)`;
+      resultImgWrap.style.display = "block";
+      return;
+    }
+
+    // download_url은 확실히 존재하는 실제 파일을 가리킴
+    const abs = hit.url;
+    imgDebug.innerHTML =
+      `TYPE: <b>${code}</b><br/>` +
+      `FILE: ${hit.name}<br/>` +
+      `URL: <a class="link" href="${abs}" target="_blank" rel="noreferrer">${abs}</a>`;
+
+    resultImg.onload = () => {
+      resultImgWrap.style.display = "block";
+      resultImgWrap.scrollIntoView({behavior:"smooth", block:"start"});
+    };
+    resultImg.onerror = () => {
+      imgErr.style.display = "block";
+      imgErr.textContent =
+        `이미지 로딩 실패(실파일 URL인데도 실패)\n` +
+        `- URL: ${abs}\n\n` +
+        `가능 원인:\n` +
+        `1) 레포가 private이라 download_url 접근 제한\n` +
+        `2) 브라우저 확장/보안 설정 차단`;
+      resultImgWrap.style.display = "block";
+    };
+
+    resultImg.src = abs + `?v=${Date.now()}`;
+  } catch (e){
+    imgErr.style.display = "block";
+    imgErr.textContent =
+      `이미지 인덱스 로딩 실패\n` +
+      `${String(e)}\n\n` +
+      `해결:\n` +
+      `1) 레포가 public인지 확인\n` +
+      `2) images 폴더가 레포 루트에 있는지 확인\n` +
+      `3) API 제한(너무 자주 새로고침) 시 잠깐 후 재시도`;
+    resultImgWrap.style.display = "block";
+  }
 
       // 현재 페이지 기준으로 절대 URL로 변환 (Pages 하위 경로 안전)
       const abs = new URL(raw, window.location.href).href;
@@ -324,13 +374,12 @@
       };
     }
 
-    function checkAutoCalc(){
-      const answered = getAnsweredCount();
-      if (answered === 32 && !alreadyCalculated){
-        alreadyCalculated = true;
-        showResultImage(calcTypeCode());
-      }
-    }
+    async function checkAutoCalc(){
+  if (answered === 32 && !alreadyCalculated){
+    alreadyCalculated = true;
+    await showResultImage(calcTypeCode());
+  }
+}
 
     function reset_all(){
       alreadyCalculated = false;
@@ -348,15 +397,37 @@
     }
 
     // 버튼
-    showResultBtn.addEventListener("click", () => {
-      if (getAnsweredCount() !== 32) return;
-      alreadyCalculated = true;
-      showResultImage(calcTypeCode());
-    });
+    showResultBtn.addEventListener("click", async () => {
+  if (getAnsweredCount() !== 32) return;
+  alreadyCalculated = true;
+  await showResultImage(calcTypeCode());
+});
     resetBtn.addEventListener("click", reset_all);
 
     // 최초 렌더
     build_questions();
   </script>
+  let IMAGE_INDEX = null;
+
+// GitHub repo의 images 폴더 실제 파일명을 읽어서 인덱스를 만듦
+async function loadImageIndex(){
+  // 너의 레포: grua0116-cpu / grua
+  const api = "https://api.github.com/repos/grua0116-cpu/grua/contents/images";
+  const res = await fetch(api, { cache: "no-store" });
+  if (!res.ok) throw new Error(`GitHub API failed: ${res.status}`);
+  const items = await res.json();
+
+  // { "resonator": {url: "...", name:"Resonator.PNG"} } 처럼 만든다
+  const idx = {};
+  for (const it of items){
+    if (!it || !it.name || !it.download_url) continue;
+    const lower = it.name.toLowerCase();
+    // 확장자 제거
+    const base = lower.replace(/\.(png|jpg|jpeg|webp)$/i, "");
+    idx[base] = { url: it.download_url, name: it.name };
+  }
+  IMAGE_INDEX = idx;
+}
+
 </body>
 </html>
