@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>GRUA CAMPUS POSITION</title>
+  <title>GRUA CAMPUS POSITIONS</title>
 
   <style>
     :root{
@@ -27,7 +27,7 @@
     button{background:#e9f1ff;color:#0b1220;border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer;}
     button.secondary{background:transparent;color:var(--txt);border:1px solid var(--line);}
 
-    /* intro panel */
+    /* intro */
     #intro{
       background:var(--panel);
       border:1px solid var(--line);
@@ -37,84 +37,54 @@
     }
     .meta{font-size:11px;letter-spacing:.08em;color:var(--muted);text-align:right;}
 
-    /* ===== Result Agent Card ===== */
-    .result{display:none;margin-top:18px;}
-    .agent-card{
-      background:linear-gradient(180deg,#0b121b 0%, #08101a 100%);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:16px;
-      box-shadow:0 18px 60px rgba(0,0,0,.45);
-      position:relative;
+    /* start flow: 숨김 */
+    #questions, #actionsWrap, #progressWrap { display:none; }
+
+    /* progress */
+    .prog{
+      display:flex;justify-content:space-between;align-items:center;
+      gap:12px;margin:0 0 12px;
+      color:var(--muted);font-size:12px;
+    }
+    .bar{
+      width:100%;height:10px;border-radius:999px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.08);
       overflow:hidden;
     }
-    .agent-card:before{
-      content:"";
-      position:absolute; inset:-1px;
-      background:
-        radial-gradient(600px 240px at 18% 12%, rgba(120,190,255,.10), transparent 60%),
-        radial-gradient(520px 220px at 86% 28%, rgba(140,255,190,.07), transparent 60%),
-        linear-gradient(90deg, rgba(255,255,255,.03), transparent 35%, rgba(255,255,255,.02));
-      pointer-events:none;
+    .fill{
+      height:100%;width:0%;
+      background:linear-gradient(90deg, rgba(191,230,255,.95), rgba(170,255,220,.85));
+      transition:width .18s ease;
     }
-    .agent-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;position:relative;}
-    .stamp{
-      font-weight:900; letter-spacing:.12em; font-size:11px;
-      color:#0b1220;background:#e9f1ff;
-      padding:8px 10px; border-radius:12px;
-    }
-    .agent-title{margin-top:14px;position:relative;}
-    .kicker{font-size:11px;letter-spacing:.14em;color:var(--muted);margin-bottom:6px;}
-    .type-name{font-size:28px;font-weight:900;letter-spacing:.02em;line-height:1.1;}
-    .type-code{
-      margin-top:6px;
-      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-      font-size:13px; letter-spacing:.18em; color:#bcd0ee;
-      padding:8px 10px; display:inline-block;
-      border:1px solid var(--line); border-radius:12px;
+
+    /* result: image only */
+    #resultImgWrap{
+      display:none;
+      margin-top:18px;
       background:rgba(0,0,0,.18);
-    }
-    .agent-media{margin-top:12px;position:relative;}
-    .agent-media img{
-      width:100%;
-      max-height:320px;
-      object-fit:cover;
-      border-radius:16px;
       border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+    }
+    #resultImg{
+      width:100%;
+      max-height:520px;
+      object-fit:contain;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
       background:rgba(0,0,0,.18);
       display:block;
     }
-
-    .agent-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px;position:relative;}
-    @media (min-width: 860px){
-      .agent-grid{grid-template-columns:1fr 1fr;}
-      .panel.wide{grid-column:1 / -1;}
+    .smallnote{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.6}
+    .err{
+      color:#ff8aa0;
+      font-size:12px;
+      margin-top:10px;
+      display:none;
+      line-height:1.55;
+      white-space:pre-wrap;
     }
-    .panel{
-      background:rgba(0,0,0,.18);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px 12px 10px;
-    }
-    .panel-title{font-size:11px;letter-spacing:.14em;color:var(--muted);margin-bottom:10px;}
-    .row{display:flex;justify-content:space-between;gap:10px;margin:8px 0;}
-    .label{font-size:11px;letter-spacing:.14em;color:var(--muted);}
-    .value{font-size:13px;font-weight:800;color:var(--txt);}
-    .axis{display:flex;flex-direction:column;gap:8px;}
-    .axis-row{
-      display:grid;grid-template-columns:26px 24px 1fr;
-      align-items:center;gap:10px;padding:10px 10px;border-radius:14px;
-      border:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.16);
-    }
-    .axis-k{font-weight:900;letter-spacing:.12em;color:#cfe0ff;width:26px;text-align:center;}
-    .axis-v{font-weight:900;font-size:14px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#e9f1ff;}
-    .axis-s{font-size:12px;color:var(--muted);text-align:right;}
-    .body{font-size:13px;line-height:1.65;color:#dbe6f7;}
-    .agent-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;position:relative;}
-    .hint{color:var(--muted);font-size:11px;line-height:1.3;text-align:right;}
-
-    /* start flow: 숨김 */
-    #questions, #actionsWrap { display:none; }
   </style>
 </head>
 
@@ -122,13 +92,11 @@
   <div class="wrap">
     <section id="intro">
       <h1>GRUA CAMPUS POSITION</h1>
-      <p class="sub">
-        이 질문을 통해 당신의 GRUA 캠퍼스 내 포지션을 분석합니다. 결과는 16가지 중 하나로 분류됩니다.
-      </p>
+      <p class="sub">이 질문을 통해 당신의 GRUA 캠퍼스 내 포지션을 분석합니다. 결과는 16가지 중 하나로 분류됩니다.</p>
 
       <div class="meta">
         <div>Format: 32 Items · 5-Point Scale</div>
-        <div>Output: TYPE / AXIS / POSITION / GROUND</div>
+        <div>Output: IMAGE ONLY</div>
       </div>
 
       <div style="margin-top:14px;">
@@ -136,76 +104,29 @@
       </div>
     </section>
 
+    <div id="progressWrap">
+      <div class="prog">
+        <div id="progText">진행 0 / 32</div>
+        <div>전부 답하면 자동으로 결과가 나옵니다</div>
+      </div>
+      <div class="bar"><div class="fill" id="fill"></div></div>
+    </div>
+
     <div class="grid" id="questions"></div>
 
     <div class="actions" id="actionsWrap">
-      <button id="calcBtn">결과 계산</button>
       <button class="secondary" id="resetBtn">전체 초기화</button>
     </div>
 
-    <div id="result" class="result">
-      <div class="agent-card">
-        <div class="agent-head">
-          <div class="stamp">GRUA / CLASSIFIED</div>
-          <div class="meta" id="ts"></div>
-        </div>
-
-        <div class="agent-title">
-          <div class="kicker">AGENT FILE</div>
-          <div class="type-name" id="typeName">TYPE NAME</div>
-          <div class="type-code" id="typeCode">TYPE CODE</div>
-        </div>
-
-        <div class="agent-media">
-          <img id="typeImg" alt="type image" />
-        </div>
-
-        <div class="agent-grid">
-          <div class="panel">
-            <div class="panel-title">PROFILE</div>
-            <div class="row"><span class="label">STATUS</span><span class="value" id="status">STABLE</span></div>
-            <div class="row"><span class="label">RISK</span><span class="value" id="risk">LOW</span></div>
-            <div class="row"><span class="label">SIGNATURE</span><span class="value" id="signature">Λ-TRACE</span></div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-title">AXIS SUMMARY</div>
-            <div class="axis">
-              <div class="axis-row"><span class="axis-k">G</span><span class="axis-v" id="axisG">I</span><span class="axis-s" id="scoreG">0 / 0</span></div>
-              <div class="axis-row"><span class="axis-k">R</span><span class="axis-v" id="axisR">F</span><span class="axis-s" id="scoreR">0 / 0</span></div>
-              <div class="axis-row"><span class="axis-k">U</span><span class="axis-v" id="axisU">A</span><span class="axis-s" id="scoreU">0 / 0</span></div>
-              <div class="axis-row"><span class="axis-k">A</span><span class="axis-v" id="axisA">P</span><span class="axis-s" id="scoreA">0 / 0</span></div>
-            </div>
-          </div>
-
-          <div class="panel wide">
-            <div class="panel-title">LOVE PRESERVATION METHOD</div>
-            <div class="body" id="blurb">...</div>
-          </div>
-
-          <div class="panel wide">
-            <div class="panel-title">OBSERVATION NOTE</div>
-            <div class="body" id="note">...</div>
-          </div>
-        </div>
-
-        <div class="agent-foot">
-          <div class="hint">※ 동점은 앞쪽(Inner/Faith/Anchor/Participant) 승 처리</div>
-        </div>
-      </div>
+    <!-- RESULT: IMAGE ONLY -->
+    <div id="resultImgWrap">
+      <img id="resultImg" alt="result image" />
+      <div class="err" id="imgErr"></div>
+      <div class="smallnote" id="imgDebug"></div>
     </div>
   </div>
 
   <script>
-    // ====== 옵션 ======
-    const OPTIONS = [
-      ["0", "전혀 아니다"],
-      ["1", "아니다"],
-      ["2", "보통이다"],
-      ["3", "그렇다"],
-      ["4", "매우 그렇다"],
-    ];
-
     // ====== 질문(32) ======
     const QUESTIONS = [
       // G 1-8
@@ -246,7 +167,16 @@
       "있는 그대로의 이야기를 존중하는 편이다",
     ];
 
-    // ====== 너가 준 매핑 ======
+    // ====== 옵션 ======
+    const OPTIONS = [
+      ["0", "전혀 아니다"],
+      ["1", "아니다"],
+      ["2", "보통이다"],
+      ["3", "그렇다"],
+      ["4", "매우 그렇다"],
+    ];
+
+    // ====== 매핑 ======
     const G_INNER = [1,3,6,7];
     const G_OUTER = [2,4,5,8];
     const R_FAITH = [9,11,13,15];
@@ -256,27 +186,8 @@
     const A_PART   = [25,27,29,31];
     const A_OBS    = [26,28,30,32];
 
-    // ====== 타입 데이터 ======
-    const TYPE_DATA = {
-      "I-F-A-P": ["ARCHIVIST", "기록과 맥락을 통해 감정을 보존한다.", "관계에 직접 개입하기보다 의미를 수집한다.", "LOW"],
-      "I-F-A-B": ["WITNESS", "신념을 유지하며 관계의 기준점을 지킨다.", "거리를 유지한 관찰이 안전하다고 느낀다.", "LOW"],
-      "I-F-L-P": ["AUTHOR", "서사를 재구성해 감정을 지속시킨다.", "개입과 투사를 통해 관계를 ‘쓰는’ 편이다.", "MID"],
-      "I-F-L-B": ["CURATOR", "흐름을 따라 기록을 정리하며 감정을 보존한다.", "있는 그대로를 보존하는 편집자에 가깝다.", "LOW"],
-      "I-E-A-P": ["ANALYST", "납득 가능한 근거를 모아 감정을 유지한다.", "설명 가능한 패턴을 찾으면 안정된다.", "MID"],
-      "I-E-A-B": ["OBSERVER-α", "증거 기반으로 감정을 정렬한다.", "감정의 과열을 관찰로 식힌다.", "LOW"],
-      "I-E-L-P": ["STRATEGIST", "관계 변동을 계산해 감정을 조정한다.", "상황에 맞춰 서사를 재배치한다.", "MID"],
-      "I-E-L-B": ["FOCUSING-α", "흐름 속 단서를 수집해 감정을 유지한다.", "거리 유지가 기본 안전장치다.", "LOW"],
-      "O-F-A-P": ["DEVOTEE", "대상이 준 신호를 믿고 감정을 고정한다.", "상대가 중심축이 되면 강해진다.", "MID"],
-      "O-F-A-B": ["SENTINEL", "신념으로 관계를 지키되 관찰을 유지한다.", "개입은 최소, 수호가 우선이다.", "LOW"],
-      "O-F-L-P": ["RESONATOR", "대상의 변화에 공명하며 감정을 이어간다.", "감정이 파동처럼 움직인다.", "MID"],
-      "O-F-L-B": ["LIBRARIAN", "변화의 기록을 축적해 감정을 보존한다.", "흐름을 데이터처럼 저장한다.", "LOW"],
-      "O-E-A-P": ["CONFESSOR", "납득과 증거가 확보되면 급격히 깊어진다.", "근거 없는 감정은 불안을 만든다.", "MID"],
-      "O-E-A-B": ["ARCHIVIST-Ω", "외부 단서를 정리해 감정을 고정한다.", "관찰이 곧 안정 장치다.", "LOW"],
-      "O-E-L-P": ["ADAPTER", "상대 변화에 맞춰 근거를 새로 쌓는다.", "유연하지만 소모가 있다.", "MID"],
-      "O-E-L-B": ["FOCUSING", "흐름 속 증거만 취해 감정을 유지한다.", "거리 유지가 기본값이다.", "LOW"],
-    };
-
     // ====== 타입별 이미지 경로 ======
+    // ※ 여기 경로가 실제 repo에 존재해야 함 (대소문자 포함)
     const IMAGES = {
       "I-F-A-P": "images/archivist.jpg",
       "I-F-A-B": "images/witness.jpg",
@@ -296,15 +207,27 @@
       "O-E-L-B": "images/focusing.jpg",
     };
 
-    // ====== UI 생성 ======
+    // ====== DOM ======
+    const intro = document.getElementById("intro");
     const questionsEl = document.getElementById("questions");
     const actionsWrap = document.getElementById("actionsWrap");
-    const resultEl = document.getElementById("result");
+    const progressWrap = document.getElementById("progressWrap");
+    const progText = document.getElementById("progText");
+    const fill = document.getElementById("fill");
+
+    const resultImgWrap = document.getElementById("resultImgWrap");
+    const resultImg = document.getElementById("resultImg");
+    const imgErr = document.getElementById("imgErr");
+    const imgDebug = document.getElementById("imgDebug");
+
+    let alreadyCalculated = false;
 
     function build_questions(){
       questionsEl.innerHTML = "";
+
       QUESTIONS.forEach((text, idx) => {
         const i = idx + 1;
+
         const card = document.createElement("div");
         card.className = "qcard";
 
@@ -315,6 +238,14 @@
         const sel = document.createElement("select");
         sel.id = `q${i}`;
 
+        // 기본값: 미선택 (자동결과용)
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.text = "선택하세요";
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        sel.appendChild(placeholder);
+
         OPTIONS.forEach(([val, label]) => {
           const opt = document.createElement("option");
           opt.value = val;
@@ -322,24 +253,45 @@
           sel.appendChild(opt);
         });
 
-        sel.value = "2";
+        sel.addEventListener("change", () => {
+          updateProgress();
+          checkAutoCalc();
+        });
 
         card.appendChild(p);
         card.appendChild(sel);
         questionsEl.appendChild(card);
       });
+
+      updateProgress();
+    }
+
+    function getAnsweredCount(){
+      let cnt = 0;
+      for (let i=1; i<=32; i++){
+        const el = document.getElementById(`q${i}`);
+        if (el && el.value !== "") cnt++;
+      }
+      return cnt;
+    }
+
+    function updateProgress(){
+      const answered = getAnsweredCount();
+      progText.innerText = `진행 ${answered} / 32`;
+      fill.style.width = `${(answered/32)*100}%`;
     }
 
     function score(qnum){
       const el = document.getElementById(`q${qnum}`);
-      return el ? parseInt(el.value, 10) : 0;
+      if (!el || el.value === "") return 0;
+      return parseInt(el.value, 10);
     }
 
     function ssum(nums){
       return nums.reduce((acc, n) => acc + score(n), 0);
     }
 
-    function calc(){
+    function calcTypeCode(){
       const g_inner = ssum(G_INNER), g_outer = ssum(G_OUTER);
       const r_faith = ssum(R_FAITH), r_evid  = ssum(R_EVID);
       const u_anchor= ssum(U_ANCHOR), u_flow = ssum(U_FLOW);
@@ -349,77 +301,84 @@
       const R = (r_faith >= r_evid)  ? "F" : "E";
       const U = (u_anchor >= u_flow) ? "A" : "L";
       const A = (a_part >= a_obs)    ? "P" : "B";
-      const code = `${G}-${R}-${U}-${A}`;
+      return `${G}-${R}-${U}-${A}`;
+    }
 
-      const data = TYPE_DATA[code] || ["UNNAMED","(method)","(note)","LOW"];
-      const [name, method, note, risk] = data;
-      const img = IMAGES[code] || "";
+    function showResultImage(code){
+      imgErr.style.display = "none";
+      imgErr.textContent = "";
+      imgDebug.textContent = "";
 
-      document.getElementById("typeCode").innerText = code;
-      document.getElementById("typeName").innerText = name;
-
-      document.getElementById("axisG").innerText = G;
-      document.getElementById("axisR").innerText = R;
-      document.getElementById("axisU").innerText = U;
-      document.getElementById("axisA").innerText = A;
-
-      document.getElementById("scoreG").innerText = `${g_inner} / ${g_outer}`;
-      document.getElementById("scoreR").innerText = `${r_faith} / ${r_evid}`;
-      document.getElementById("scoreU").innerText = `${u_anchor} / ${u_flow}`;
-      document.getElementById("scoreA").innerText = `${a_part} / ${a_obs}`;
-
-      document.getElementById("blurb").innerText = method;
-      document.getElementById("note").innerText = note;
-      document.getElementById("risk").innerText = risk;
-      document.getElementById("status").innerText = "STABLE";
-      document.getElementById("signature").innerText = "Λ-TRACE";
-
-      const now = new Date();
-      const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")} `
-               + `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
-      document.getElementById("ts").innerText = "RECORDED: " + ts;
-
-      const imgEl = document.getElementById("typeImg");
-      if (img){
-        imgEl.src = img;
-        imgEl.style.display = "block";
-      } else {
-        imgEl.src = "";
-        imgEl.style.display = "none";
+      const src = IMAGES[code] || "";
+      if (!src){
+        imgErr.style.display = "block";
+        imgErr.textContent = `이미지 매핑이 없습니다.\ncode=${code}\nIMAGES[code]가 비어있음`;
+        return;
       }
 
-      resultEl.style.display = "block";
-      resultEl.scrollIntoView({behavior:"smooth", block:"start"});
+      // 디버그: 어떤 경로를 불러오는지 표시 (이미지 안 뜰 때 원인 확인용)
+      imgDebug.textContent = `TYPE: ${code}  |  IMG: ${src}`;
+
+      // 캐시/경로 문제 회피: querystring 붙여 갱신
+      const bust = `?v=${Date.now()}`;
+      resultImg.src = src + bust;
+
+      resultImg.onload = () => {
+        resultImgWrap.style.display = "block";
+        resultImgWrap.scrollIntoView({behavior:"smooth", block:"start"});
+      };
+
+      resultImg.onerror = () => {
+        imgErr.style.display = "block";
+        imgErr.textContent =
+          `이미지 로딩 실패\n` +
+          `- 요청 경로: ${resultImg.src}\n\n` +
+          `가장 흔한 원인:\n` +
+          `1) 파일명/폴더명 대소문자 불일치 (GitHub Pages는 엄격)\n` +
+          `2) images 폴더가 repo 루트에 없음 (index.html과 같은 위치 기준)\n` +
+          `3) 실제 파일 확장자 .jpg/.png 불일치`;
+      };
+    }
+
+    function checkAutoCalc(){
+      const answered = getAnsweredCount();
+      if (answered === 32 && !alreadyCalculated){
+        alreadyCalculated = true;
+        const code = calcTypeCode();
+        showResultImage(code);
+      }
     }
 
     function reset_all(){
+      alreadyCalculated = false;
+
       for (let i=1; i<=32; i++){
         const el = document.getElementById(`q${i}`);
-        if (el) el.value = "2";
+        if (el) el.value = "";
       }
-      resultEl.style.display = "none";
-      const imgEl = document.getElementById("typeImg");
-      imgEl.src = "";
-      imgEl.style.display = "none";
+      updateProgress();
+
+      resultImgWrap.style.display = "none";
+      resultImg.src = "";
+      imgErr.style.display = "none";
+      imgErr.textContent = "";
+      imgDebug.textContent = "";
+
       window.scrollTo({top:0, behavior:"smooth"});
     }
 
-    // ====== START 흐름 ======
+    // START
     document.getElementById("startBtn").addEventListener("click", () => {
-      // 질문/액션 보여주기
       build_questions();
-      document.getElementById("questions").style.display = "grid";
+      intro.style.display = "none";
+      questionsEl.style.display = "grid";
       actionsWrap.style.display = "flex";
-
-      // 인트로 숨기기
-      document.getElementById("intro").style.display = "none";
-
-      // 첫 질문으로 스크롤
+      progressWrap.style.display = "block";
       questionsEl.scrollIntoView({behavior:"smooth", block:"start"});
     });
 
-    document.getElementById("calcBtn").addEventListener("click", calc);
     document.getElementById("resetBtn").addEventListener("click", reset_all);
   </script>
+
 </body>
 </html>
